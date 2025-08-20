@@ -63,6 +63,7 @@ async function main() {
       console.log(`🔷账号${user.index} >> Start work`)
       console.log(`随机延迟${user.getRandomTime()}ms`);
       // 签到
+      console.log(ckName)
       const integral = await user.signin();
       let integralScore = 0
       if (user.ckStatus) {
