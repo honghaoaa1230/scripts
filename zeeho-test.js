@@ -64,6 +64,7 @@ async function main() {
       console.log(`随机延迟${user.getRandomTime()}ms`);
       // 签到
       console.log(ckName)
+      console.log(userCookie)
       const integral = await user.signin();
       let integralScore = 0
       if (user.ckStatus) {
