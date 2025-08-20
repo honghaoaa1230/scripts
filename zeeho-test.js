@@ -64,7 +64,7 @@ async function main() {
       console.log(`随机延迟${user.getRandomTime()}ms`);
       // 签到
       console.log(ckName)
-      console.log(userCookie)
+      console.log(JSON.stringify(userCookie))
       const integral = await user.signin();
       let integralScore = 0
       if (user.ckStatus) {
@@ -388,7 +388,7 @@ async function getCookie() {
     "userName": nickName,
     "userAgent": userAgent
   }
-
+  console.log(newData)
   userCookie = userCookie ? JSON.parse(userCookie) : [];
   const index = userCookie.findIndex(e => e.userId == newData.userId);
 
