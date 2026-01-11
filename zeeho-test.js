@@ -96,8 +96,8 @@ async function main() {
                 await $.wait(user.getRandomTime());
                 //查询待领取积分
                 const score = await user.getSignInfo();
-                const msg_title = `极核签到成功`+`获得积分: ${integral+integralScore+3}分`+`总积分: ${score}分 累计签到: ${count}天`;
-                const msg = `✅ 签到获得积分: ${integral+integralScore+3}分\n✅ 盲盒抽奖获得积分: ${integralScore ? integralScore + '分' : '未抽奖'}\n✅ 当前总积分: ${score}分\n✅ 累计签到: ${count}天`;
+                const msg_title = `极核签到成功 `+ `累计签到: ${count}天`;
+                const msg = `✅ 签到获得积分: ${integral+integralScore}分\n✅ 盲盒抽奖获得积分: ${integralScore ? integralScore + '分' : '未抽奖'}\n✅ 当前总积分: ${score}分\n✅ 累计签到: ${count}天`;
                 await sendServerChanNotification(sendkey, msg_title, msg).then(success => {
                 if (success) {
                     console.log('通知已发送到微信');
@@ -391,7 +391,7 @@ async function sendServerChanNotification(sendkey, title, desp) {
     return false;
   }
 
-  const url = `https://sctapi.ftqq.com/${sendkey}.send`; // 注意：无多余空格！
+  const url = `https://sctapi.ftqq.com/${sendkey}.send`; // 确保无空格
 
   try {
     const response = await fetch(url, {
@@ -401,21 +401,23 @@ async function sendServerChanNotification(sendkey, title, desp) {
       },
       body: new URLSearchParams({
         title: title,
-        desp: desp || '', // 允许为空
+        desp: desp || '',
       }),
     });
 
-    const data = await response.json();
+    const result = await response.json(); // 整个响应对象
 
-    if (data.errno === 0) {
+    // ✅ 正确判断：检查顶层 code 或 data.errno
+    if (result.code === 0 && result.data?.errno === 0) {
       console.log('✅ Server酱推送成功');
       return true;
     } else {
-      console.warn('⚠️ Server酱推送失败:', data.errmsg || data);
+      const errorMsg = result.message || result.data?.error || JSON.stringify(result);
+      console.warn('⚠️ Server酱推送失败:', errorMsg);
       return false;
     }
   } catch (err) {
-    console.error('❌ Server酱网络错误:', err.message || err);
+    console.error('❌ Server酱网络或解析错误:', err.message || err);
     return false;
   }
 }
