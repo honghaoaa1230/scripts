@@ -96,8 +96,9 @@ async function main() {
                 await $.wait(user.getRandomTime());
                 //查询待领取积分
                 const score = await user.getSignInfo();
-                const msg = `✅ 签到获得积分: ${integral ? integral + '分' : '今日已签到'}\n✅ 盲盒抽奖获得积分: ${integralScore ? integralScore + '分' : '未抽奖'}\n✅ 当前总积分: ${score}分\n✅ 累计签到: ${count}天`;
-                sendServerChanNotification(sendkey, `极核-ZEEHO 第${user.index}个账号签到结果`, msg).then(success => {
+                const msg_title = `极核签到成功`+`获得积分: ${integral+integralScore+3}分`+`总积分: ${score}分 累计签到: ${count}天`;
+                const msg = `✅ 签到获得积分: ${integral+integralScore+3}分\n✅ 盲盒抽奖获得积分: ${integralScore ? integralScore + '分' : '未抽奖'}\n✅ 当前总积分: ${score}分\n✅ 累计签到: ${count}天`;
+                await sendServerChanNotification(sendkey, msg_title, msg).then(success => {
                 if (success) {
                     console.log('通知已发送到微信');
                 }
@@ -115,7 +116,7 @@ async function main() {
         }
     } catch (e) {
         $.log(`⛔️ main run error => ${e}`);
-        sendServerChanNotification(sendkey, `极核-ZEEHO 脚本运行异常`, `⛔️ main run error => ${e}`);
+        await sendServerChanNotification(sendkey, `极核-ZEEHO 脚本运行异常`, `⛔️ main run error => ${e}`);
         throw new Error(`⛔️ main run error => ${e}`);
     }
 }
