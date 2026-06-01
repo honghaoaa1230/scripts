@@ -6,35 +6,31 @@
  * 设置号码：Safari 访问 https://httpbin.org/get?sq=你的号码
  */
 
-var TARGET = '374';
-
-// 安全读取 $prefs
 try {
-    var v = $prefs.valueForKey('sq_target_number');
-    if (v) { TARGET = v; }
-} catch (e) {}
+    var TARGET = '374';
 
-// 安全通知
-function notify(title, msg) {
-    try { $notify(title, msg); } catch (e) {}
-}
-
-if (typeof $response === 'undefined') {
-    $done({});
-} else if (!$response.body) {
-    $done({});
-} else {
+    // 读取 $prefs 中的目标号码
     try {
+        var v = $prefs.valueForKey('sq_target_number');
+        if (v) { TARGET = v; }
+    } catch (e1) {}
+
+    // $response 可能为 null / undefined / 无 body
+    if (!$response || !$response.body) {
+        $done({});
+    } else {
         var raw = $response.body;
-        // 确保是字符串
         if (typeof raw !== 'string') {
-            raw = JSON.stringify(raw);
+            raw = String(raw);
         }
+
         raw = raw.replace(/"number"\s*:\s*"[^"]*"/g, '"number":"' + TARGET + '"');
         raw = raw.replace(/"wait"\s*:\s*\d+/g, '"wait":0);
-        notify('寿司郎', '排队号=' + TARGET);
+
+        try { $notify('寿司郎', '排队号=' + TARGET); } catch (e2) {}
+
         $done({ body: raw });
-    } catch (e) {
-        $done({});
     }
+} catch (e) {
+    $done({});
 }
