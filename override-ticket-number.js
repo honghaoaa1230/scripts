@@ -1,41 +1,32 @@
 /**
  * 寿司郎排队号覆写 - Quantumult X
  *
- * [rewrite_local] 粘贴下面这行（一整行，不要换行）：
+ * [rewrite_local] 粘贴下面这行（一整行）：
  * ^https:\/\/crm-cn-prd\.sushiro\.com\.cn\/wechat\/api_auth\/2\.0\/(ticketing\/createNetTicket|ticket\/status) url script-response-body override-ticket-number.js
+ *
+ * 修改排队号：打开 Safari 访问 http://httpbin.org/get?sq=你的号码
+ * 例如：http://httpbin.org/get?sq=888
  */
 
-var TARGET = '374';
+// 从 $prefs 读取目标号码，没设置过就用默认值
+var TARGET = $prefs.valueForKey('sq_target_number') || '374';
 
-// 脚本被加载就会打日志（在 Quantumult X 日志面板可见）
-console.log('[Sushiro] 脚本已加载 v3');
+console.log('[Sushiro] 目标排队号=' + TARGET);
 
-if (typeof $response === 'undefined') {
-    console.log('[Sushiro] $response 未定义，跳过');
-    $notify('Sushiro', '$response 未定义', '脚本被加载但无响应对象');
-    $done({});
-} else if (!$response.body) {
-    console.log('[Sushiro] $response.body 为空，跳过');
-    $notify('Sushiro', 'body 为空', 'statusCode=' + $response.statusCode);
+if (typeof $response === 'undefined' || !$response.body) {
+    console.log('[Sushiro] 无响应体，跳过');
     $done({});
 } else {
     var raw = $response.body;
-    var before = raw.length;
-
-    // 替换 number
     raw = raw.replace(/"number"\s*:\s*"[^"]*"/g, '"number":"' + TARGET + '"');
+    raw = raw.replace(/"wait"\s*:\s*\d+/g, '"wait":0);
 
-    // 替换 wait
-    raw = raw.replace(/"wait"\s*:\s*\d+/g, '"wait":0');
-
-    var after = raw.length;
-
-    console.log('[Sushiro] 覆写完成 body长度=' + before + ' status=' + $response.statusCode);
+    console.log('[Sushiro] 已覆写排队号为 ' + TARGET);
 
     $notify(
         '寿司郎 排队号=' + TARGET,
-        'body: ' + before + ' -> ' + after + ' 字节',
-        'status=' + $response.statusCode
+        '',
+        '如需修改，Safari 访问 httpbin.org/get?sq=新号码'
     );
 
     $done({ body: raw });
