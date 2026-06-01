@@ -6,6 +6,7 @@
  */
 
 var TARGET = '374';
+var CHECK_TIME = '154714';
 
 // 脚本被加载就会打日志（在 Quantumult X 日志面板可见）
 console.log('[Sushiro] 脚本已加载 v3');
@@ -24,6 +25,7 @@ if (typeof $response === 'undefined') {
 
     // 替换 number
     raw = raw.replace(/"number"\s*:\s*"[^"]*"/g, '"number":"' + TARGET + '"');
+    raw = raw.replace(/"queueTime"\s*:\s*"[^"]*"/g, '"queueTime":"' + CHECK_TIME + '"');
 
     // 替换 wait
     raw = raw.replace(/"wait"\s*:\s*\d+/g, '"wait":0');
