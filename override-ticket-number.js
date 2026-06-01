@@ -1,33 +1,40 @@
 /**
  * 寿司郎排队号覆写 - Quantumult X
- *
- * [rewrite_local] 粘贴下面这行（一整行）：
+ * [rewrite_local]
  * ^https:\/\/crm-cn-prd\.sushiro\.com\.cn\/wechat\/api_auth\/2\.0\/(ticketing\/createNetTicket|ticket\/status) url script-response-body override-ticket-number.js
  *
- * 修改排队号：打开 Safari 访问 http://httpbin.org/get?sq=你的号码
- * 例如：http://httpbin.org/get?sq=888
+ * 设置号码：Safari 访问 https://httpbin.org/get?sq=你的号码
  */
 
-// 从 $prefs 读取目标号码，没设置过就用默认值
-var TARGET = $prefs.valueForKey('sq_target_number') || '374';
+var TARGET = '374';
 
-console.log('[Sushiro] 目标排队号=' + TARGET);
+// 安全读取 $prefs
+try {
+    var v = $prefs.valueForKey('sq_target_number');
+    if (v) { TARGET = v; }
+} catch (e) {}
 
-if (typeof $response === 'undefined' || !$response.body) {
-    console.log('[Sushiro] 无响应体，跳过');
+// 安全通知
+function notify(title, msg) {
+    try { $notify(title, msg); } catch (e) {}
+}
+
+if (typeof $response === 'undefined') {
+    $done({});
+} else if (!$response.body) {
     $done({});
 } else {
-    var raw = $response.body;
-    raw = raw.replace(/"number"\s*:\s*"[^"]*"/g, '"number":"' + TARGET + '"');
-    raw = raw.replace(/"wait"\s*:\s*\d+/g, '"wait":0);
-
-    console.log('[Sushiro] 已覆写排队号为 ' + TARGET);
-
-    $notify(
-        '寿司郎 排队号=' + TARGET,
-        '',
-        '如需修改，Safari 访问 httpbin.org/get?sq=新号码'
-    );
-
-    $done({ body: raw });
+    try {
+        var raw = $response.body;
+        // 确保是字符串
+        if (typeof raw !== 'string') {
+            raw = JSON.stringify(raw);
+        }
+        raw = raw.replace(/"number"\s*:\s*"[^"]*"/g, '"number":"' + TARGET + '"');
+        raw = raw.replace(/"wait"\s*:\s*\d+/g, '"wait":0);
+        notify('寿司郎', '排队号=' + TARGET);
+        $done({ body: raw });
+    } catch (e) {
+        $done({});
+    }
 }
