@@ -5,7 +5,7 @@
  * ^https:\/\/crm-cn-prd\.sushiro\.com\.cn\/wechat\/api_auth\/2\.0\/(ticketing\/createNetTicket|ticket\/status) url script-response-body override-ticket-number.js
  */
 
-var TARGET = '374';
+var TARGET = '633';
 var CHECK_TIME = '154714';
 
 // 脚本被加载就会打日志（在 Quantumult X 日志面板可见）
