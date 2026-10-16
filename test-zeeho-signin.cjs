@@ -3,18 +3,19 @@ const crypto = require('node:crypto');
 const fs = require('node:fs');
 const vm = require('node:vm');
 
-function load({ before = 0, after = 3, httpStatus = 200, reply = { code: '10000', message: '操作成功' } } = {}) {
+function load({ before = 0, after = 3, httpStatus = 200, server3Key = 'sctp123tunit-test-key', reply = { code: '10000', message: '操作成功' } } = {}) {
   const source = fs.readFileSync(__dirname + '/zeeho-test.js', 'utf8');
   const start = source.indexOf('!(async () => {');
   const end = source.indexOf('\nfunction randomPattern(', start);
   assert(start > 0 && end > start);
   const requests = [], notices = [], logs = [];
-  const env = { SERVER_CHAN_KEY: 'test-sendkey', ckName: '[{"token":"Bearer test-private-token"}]' };
+  const env = { SERVERCHAN3_SENDKEY: server3Key, SERVER_CHAN_KEY: 'SCTlegacy-test-key', ckName: '[{"token":"Bearer test-private-token"}]' };
   const context = {
     module: { exports: {} }, process: { env, argv: ['node', 'zeeho-test.js'] },
     require: name => {
       assert.equal(name, './sendNotify');
-      assert.equal(env.PUSH_KEY, env.SERVER_CHAN_KEY, 'Map the existing key before loading QingLong notifications');
+      assert.equal(env.PUSH_KEY, env.SERVERCHAN3_SENDKEY, 'Use the ServerChan3 key before loading QingLong notifications');
+      assert.notEqual(env.PUSH_KEY, env.SERVER_CHAN_KEY, 'Do not fall back to the old Turbo key');
       return { sendNotify: async (title, content) => notices.push({ title, content }) };
     },
     console: { log: (...args) => logs.push(args.join(' ')), error() {}, warn() {} },
@@ -45,6 +46,8 @@ function load({ before = 0, after = 3, httpStatus = 200, reply = { code: '10000'
 }
 
 (async () => {
+  assert.throws(() => load({ server3Key: '' }), /SERVERCHAN3_SENDKEY/);
+  assert.throws(() => load({ server3Key: 'SCTwrong-version' }), /SERVERCHAN3_SENDKEY/);
   let f = load();
   await f.main(); await f.SendMsgList(f.$.notifyList);
   assert.equal(f.user.signinResult.confirmed, true);
@@ -105,5 +108,5 @@ function load({ before = 0, after = 3, httpStatus = 200, reply = { code: '10000'
   f.$.notifyMsg.push('follow-up task failed');
   await f.SendMsgList(f.$.notifyList);
   assert(f.notices.at(-1).title.includes('任务异常'));
-  console.log('PASS: latest H5 signature, QingLong ServerChan mapping, truthful notifications, already-signed, and automatic card exchange');
+  console.log('PASS: ServerChan3 key selection, latest H5 signature, truthful notifications, already-signed, and automatic card exchange');
 })().catch(error => { console.error(error); process.exitCode = 1; });

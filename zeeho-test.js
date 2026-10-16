@@ -43,8 +43,12 @@ const ckName = "zeeho_data";
 const Notify = 1;//0为关闭通知,1为打开通知,默认为1
 // 无补签卡时，是否自动用 100 积分兑换一张补签卡（true=自动兑换，false=只补已有卡）
 const autoExchangeSupplementCard = true;
-// 与老王论坛脚本一样使用青龙通知模块；兼容本面板已有的 Server酱变量。
-if ($.isNode() && process.env.SERVER_CHAN_KEY) process.env.PUSH_KEY = process.env.SERVER_CHAN_KEY;
+// Server酱3：与 sijishe、老王实际运行脚本使用同一 SendKey，交由青龙模块路由。
+if ($.isNode()) {
+  const sendkey = process.env.SERVERCHAN3_SENDKEY || '';
+  if (!/^sctp\d+t[A-Za-z0-9_-]+$/.test(sendkey)) throw new Error('请配置 SERVERCHAN3_SENDKEY（Server酱3 SendKey）');
+  process.env.PUSH_KEY = sendkey;
+}
 const notify = $.isNode() ? require('./sendNotify') : '';
 let envSplitor = ["@"]; //多账号分隔符
 var userCookie = ($.isNode() ? (process.env.ckName || process.env[ckName]) : $.getdata(ckName)) || '';
