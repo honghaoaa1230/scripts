@@ -1,44 +1,47 @@
 /**
- * 寿司郎排队号覆写 - Quantumult X
- *
- * [rewrite_local] 粘贴下面这行（一整行，不要换行）：
- * ^https:\/\/crm-cn-prd\.sushiro\.com\.cn\/wechat\/api_auth\/2\.0\/(ticketing\/createNetTicket|ticket\/status) url script-response-body override-ticket-number.js
+ * 寿司郎接口探测与排队号覆写测试脚本 (Debug版)
  */
 
 var TARGET = '566';
 var CHECK_TIME = '154714';
 
-// 脚本被加载就会打日志（在 Quantumult X 日志面板可见）
-console.log('[Sushiro] 脚本已加载 v3');
+// 1. 只要规则命中，第一行就会打印
+var reqUrl = (typeof $request !== 'undefined' && $request.url) ? $request.url : '未知URL';
+console.log('[Sushiro-Debug] 命中请求: ' + reqUrl);
 
-if (typeof $response === 'undefined') {
-    console.log('[Sushiro] $response 未定义，跳过');
-    $notify('Sushiro', '$response 未定义', '脚本被加载但无响应对象');
-    $done({});
-} else if (!$response.body) {
-    console.log('[Sushiro] $response.body 为空，跳过');
-    $notify('Sushiro', 'body 为空', 'statusCode=' + $response.statusCode);
+if (typeof $response === 'undefined' || !$response.body) {
+    console.log('[Sushiro-Debug] 无响应体，跳过: ' + reqUrl);
     $done({});
 } else {
     var raw = $response.body;
-    var before = raw.length;
+    console.log('[Sushiro-Debug] 响应体前200字: ' + raw.substring(0, 200));
 
-    // 替换 number
-    raw = raw.replace(/"number"\s*:\s*"[^"]*"/g, '"number":"' + TARGET + '"');
-    raw = raw.replace(/"queueTime"\s*:\s*"[^"]*"/g, '"queueTime":"' + CHECK_TIME + '"');
+    // 检查响应体里是否包含排队相关关键字（忽略大小写）
+    var hasTicketData = /("number"|"queueTime"|"wait"|ticket|queue)/i.test(raw);
 
-    // 替换 wait
-    raw = raw.replace(/"wait"\s*:\s*\d+/g, '"wait":0');
+    if (hasTicketData) {
+        var before = raw.length;
+        // 尝试执行覆写
+        var modified = raw
+            .replace(/"number"\s*:\s*"[^"]*"/g, '"number":"' + TARGET + '"')
+            .replace(/"queueTime"\s*:\s*"[^"]*"/g, '"queueTime":"' + CHECK_TIME + '"')
+            .replace(/"wait"\s*:\s*\d+/g, '"wait":0');
 
-    var after = raw.length;
+        console.log('[Sushiro-Debug] 发现目标字段！URL=' + reqUrl);
+        console.log('[Sushiro-Debug] 完整响应体: ' + modified);
 
-    console.log('[Sushiro] 覆写完成 body长度=' + before + ' status=' + $response.statusCode);
+        // 弹窗通知显示命中的真实路径，方便你后续收紧正则
+        var shortPath = reqUrl.replace(/^https?:\/\/[^\/]+/, '');
+        $notify(
+            '寿司郎命中目标接口',
+            '路径: ' + shortPath,
+            '已尝试覆写排队号为 ' + TARGET + ' (点击查看完整日志)'
+        );
 
-    $notify(
-        '寿司郎 排队号=' + TARGET,
-        'body: ' + before + ' -> ' + after + ' 字节',
-        'status=' + $response.statusCode
-    );
-
-    $done({ body: raw });
+        $done({ body: modified });
+    } else {
+        // 不是排队接口的普通静态/配置接口直接放行，不弹窗打扰
+        console.log('[Sushiro-Debug] 非排队接口，直接放行');
+        $done({});
+    }
 }
